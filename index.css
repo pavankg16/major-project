@@ -1,4 +1,3 @@
-
 :root{
     --primary-clr:#5598fd;
 
@@ -18,6 +17,8 @@ body{
     background: var(--primary-clr);
     transition: background-image 0.3s ease;
     background-image: linear-gradient(rgba(0,0,0,0.5)),rgba(0,0,0,0.5),url(https://th.bing.com/th/id/OIP.rr-jwAU718xawfltHLnnWQHaE8?w=254&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7);
+    background-size: cover;
+    background-position: center;
 }
 .wrapper{
     display: flex;
@@ -249,4 +250,3 @@ nav.units button{
     display: flex;
 }
 
-    

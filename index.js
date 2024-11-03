@@ -20,15 +20,17 @@ const temp = document.getElementById("temp"),
     fahrenheitBtn = document.querySelector(".fahrenheit"),
     hourlyBtn = document.querySelector(".hourly"),
     weekBtn = document.querySelector(".week"),
-    tempUnit = document.querySelectorAll(".temp-unit");
+    tempUnit = document.querySelectorAll(".temp-unit"),
+    searchForm = document.querySelector("#search"),
+    search = document.querySelector("#query");
 
 let currentCity = "";
 let currentUnit = "c";
 let hourlyOrWeek = "week";
 
 function getDateTime() {
-    let now = new Date();
-    let hour = now.getHours(),
+    let now = new Date(),
+        hour = now.getHours(),
         minute = now.getMinutes();
     let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     hour = hour % 12 || 12;
@@ -44,14 +46,14 @@ setInterval(() => {
 }, 1000);
 
 function getPublishIp() {
-    fetch("https://geolocation-db.com/json/", { method: "GET" })
+    fetch(`https://geolocation-db.com/json/`, { method: "GET" })
         .then((response) => response.json())
         .then((data) => {
             currentCity = data.city;
-            getWeatherData(currentCity, currentUnit, hourlyOrWeek);
+          getWeatherData(currentCity, currentUnit, hourlyOrWeek);
         })
-        .catch(error => {
-            console.error("Error fetching IP location:", error);
+        .catch((error) => {
+            console.log("Error fetching IP location:", error);
         });
 }
 getPublishIp();
@@ -69,11 +71,11 @@ function getWeatherData(city, unit, hourlyOrWeek) {
             windSpeed.innerText = today.windspeed || 0;
             humidity.innerText = `${today.humidity || 0}%`;
             visibility.innerText = today.visibility || "N/A";
-            airQuality.innerText = today.airQuality || "N/A";
+            airQuality.innerText = today.winddir;
             measureUvIndex(today.uvindex || 0);
             updateHumidityStatus(today.humidity || 0);
             updateVisibilityStatus(today.visibility || 0);
-            updateAirQualityStatus(today.airQuality || 0); 
+            updateAirQualityStatus(today.winddir || 0); 
             sunRise.innerText = convertTimeTo12HourFormat(today.sunrise || "00:00");
             sunSet.innerText = convertTimeTo12HourFormat(today.sunset || "00:00");
             mainIcon.src = getIcon(today.icon || "partly-cloudy-day");
@@ -102,7 +104,7 @@ function updateVisibilityStatus(visibility) {
 }
 
 function updateAirQualityStatus(airQuality) {
-    airQualityStatus.innerText = airQuality <= 50 ? "Good" : airQuality <= 100 ? "Moderate" : airQuality <= 150 ? "Unhealthy for Sensitive Groups" : airQuality <= 200 ? "Unhealthy" : airQuality <= 250 ? "Very Unhealthy" : "Hazardous";
+    airQualityStatus.innerText = airQuality <= 50 ? "Good👌" : airQuality <= 100 ? "Moderate😐" : airQuality <= 150 ? "Unhealthy for Sensitive Groups😷" : airQuality <= 200 ? "Unhealthy😷" : airQuality <= 250 ? "Very Unhealthy😨" : "Hazardous😱";
 }
 
 function convertTimeTo12HourFormat(time) {
@@ -142,7 +144,8 @@ function updateForecast(data, unit, type) {
         let iconCondition = data[i].icon;
         let iconSrc = getIcon(iconCondition);
         let tempUnit = unit === "f" ? "°F" : "°C";
-        card.innerHTML = `<h2 class="day-name">${dayName}</h2>
+        card.innerHTML = `
+        <h2 class="day-name">${dayName}</h2>
             <div class="card-icon">
                 <img src="${iconSrc}" alt=""/>
             </div>
@@ -197,10 +200,112 @@ function changeTimeSpan(unit) {
 }
 
 
-function getHour(datetime) {
-    return new Date(datetime).getHours() + ":00"; 
+function getHour(time) {
+    let [hour, minute] = time.split(":");
+    let ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${ampm}`;
 }
-function getDayName(datetime) {
-    const options = { weekday: 'long' };
-    return new Date(datetime).toLocaleDateString(undefined, options); 
+function getDayName(date) {
+    let day = new Date(date);
+    let days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ];
+    return days[day.getDay()];
+}
+search.addEventListener("keydown", function (e) {
+    if (e.keyCode === 13) {
+        getWeatherData(search.value, currentUnit, hourlyOrWeek);
+    }
+});
+searchForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    currentCity = search.value; 
+    getWeatherData(currentCity, currentUnit, hourlyOrWeek);
+    search.value = "";
+});
+
+// searchForm.addEventListener("submit", (e)=>{
+//     e.preventDefault();
+//     let location = search.value;
+//     if(location){
+//         currentCity = location;
+//         getWeatherData(currentCity,currentUnit,hourlyOrWeek);
+//     }
+// })
+// cities = [
+//     "Banglore",
+//     "gowibidanur",
+//     "lahore",
+//     "islamaba",
+//     "chikkabalapur",
+//     "hindupur",
+// ];
+// var currentFocus;
+search.addEventListener("input",function (e){
+    removeSuggestions();
+    var a, 
+        b,
+        i,
+      val = this.value;
+      if(!val){
+        return false;
+      }
+      currentFocus = -1;
+      
+      a= document.createElement("ul");
+      a.setAttribute("id","suggestions");
+       this.parentNode.appendChild(a);
+      for(i = 0;i< cities.length; i++){
+        if(cities[i].substr(0, val.length).toUpperCase()== val.toUpperCase()){
+            b = document.createElement("li");
+            b.innerHTML="<strong>" + cities[i].substr(0,val.length)+ "</strong>"
+            b.innerHTML += cities[i].substr(val.length);
+            b.innerHTML += "<input type='hidden' value='" +cities[i]+"'>";
+            b.addEventListener("click",function (e){
+              search.value = this.getElementsByTagName("input")[0].value;  
+              removeSuggestions();
+            });
+            a.appendChild(b);
+        }
+      }
+    });
+function removeSuggestions(){
+    var x = document.getElementById("suggestions");
+    if(x) x.parentNode.removeChild(x);
+}
+search.addEventListener("keydown",function (e){
+    var x = document.getElementById("suggestions");
+    if (x) x = x.getElementsByTagName("li");
+    if (e.keyCode == 40){
+        currentFocus++;
+        addActive(x);
+    } else if (e.keyCode == 38){
+        currentFocus--;
+        addActive(x);
+    }
+    if (e.keyCode == 13){
+        e.preventDefault();
+        if (currentFocus > -1){
+        if (x) x[currentFocus].click();
+    }
+}
+});
+function addActive(x){
+    if (!x) return false;
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus =0;
+    if (currentFocus < 0) currentFocus = x.length-1;
+    x[currentFocus].classList.add("active");
+}
+function removeActive(x){
+    for (var i = 0; i < x.length; i++){
+        x[i].classList.remove("active");
+    }
 }
